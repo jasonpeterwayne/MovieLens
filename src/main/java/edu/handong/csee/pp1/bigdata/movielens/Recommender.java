@@ -153,7 +153,31 @@ public class Recommender
 	private int predictPair(HashSet<Integer> anItemset, Integer j) {
 		/* TODO: implement this method */
 		
-		// Compute support, confidence, or lift. Based on their threshold, decide how to predict. Return 1 when metrics are satisfied by threshold, otherwise 0.
+		// Compute support, confidence, or lift. Based on their threshold, decide how to predict. Return 1 when metrics are satisfied by thresholds, otherwise 0.
+		int evidence = 0 ;
+		for (Set<Integer> p : Sets.combinations(anItemset, 1)) {
+			
+			Integer numBasketsForI = freqItemsetsWithSize1.get(p.size());
+			
+			if (numBasketsForI == null)
+				continue ;
+			
+			TreeSet<Integer> assocRule = new TreeSet<Integer>(p) ;
+			assocRule.add(j) ;
+			FrequentItemsetSize2 item = new FrequentItemsetSize2(assocRule) ;	
+			Integer numBasketsForIUnionj = freqItemsetsWithSize2.get(item) ; 
+			if (numBasketsForIUnionj == null)
+				continue ;
+			
+			double confidence = (double) numBasketsForIUnionj / numBasketsForI;
+		
+			if (confidence >= confidence_threshold_rulesize_2) {
+				evidence++;
+			}
+			if (evidence >= 2) 
+				return 1 ;
+		}
+		
 		return 0 ;
 	}
 
@@ -243,17 +267,55 @@ class FrequentItemsetSize2 implements Comparable
 @SuppressWarnings("rawtypes")
 class FrequentItemsetSize3 implements Comparable 
 {
-	int [] items ;
+	int [] items = new int[3] ;
 
 	FrequentItemsetSize3(Set<Integer> s) {
 		/* TODO: implement this method */
+		Integer [] elem = s.toArray(new Integer[3]) ;
 		
+		if (elem[0] < elem[1] && elem[1] < elem[2]) {
+			this.items[0] = elem[0] ;
+			this.items[1] = elem[1] ;
+			this.items[2] = elem[2] ;
+		}
+		else if (elem[0] < elem[2] && elem[2] < elem[1]) {
+			this.items[0] = elem[0] ;
+			this.items[1] = elem[2] ;
+			this.items[2] = elem[1] ;
+		}
+		else if (elem[1] < elem[0] && elem[0] < elem[2]) {
+			this.items[0] = elem[1] ;
+			this.items[1] = elem[0] ;
+			this.items[2] = elem[2] ;
+		}
+		else if (elem[1] < elem[2] && elem[2] < elem[0]) {
+			this.items[0] = elem[1] ;
+			this.items[1] = elem[2] ;
+			this.items[2] = elem[0] ;
+		}
+		else if (elem[2] < elem[0] && elem[0] < elem[1]) {
+			this.items[0] = elem[2] ;
+			this.items[1] = elem[0] ;
+			this.items[2] = elem[1] ;
+		}
+		else {
+			this.items[0] = elem[2] ;
+			this.items[1] = elem[1] ;
+			this.items[2] = elem[0] ;
+		}
 		// values in s must be sorted and save into items array
 	}
 
 	@Override
 	public int compareTo(Object obj) {  // this method is used for sorting when using TreeMap
 		/* TODO: implement this method */
-		return 0 ;
+		FrequentItemsetSize3 p = (FrequentItemsetSize3) obj ;
+
+		if (this.items[0] < p.items[0] && this.items[1] < p.items[1]) 
+			return -1 ;
+		if (this.items[0] > p.items[0] || this.items[1] > p.items[1])
+			return 1 ;
+
+		return (this.items[2] - p.items[2]) ;
 	}
 }
